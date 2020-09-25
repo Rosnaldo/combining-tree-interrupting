@@ -15,27 +15,27 @@ const primes = [
 ];
 
 
-const invalidMembersWithPop = (invalidMembersWith, membersToPrime) => {
-  const invalidMembersWithKeys = {};
-  for (let i = 0; i < invalidMembersWith.length; i++) {
+const mutualExclusivePop = (mutualExclusive, elementsToPrime) => {
+  const mutualExclusiveKeys = {};
+  for (let i = 0; i < mutualExclusive.length; i++) {
     let mult = 1;
-    for (let j = 0; j < invalidMembersWith[i].length; j++) {
-      const member = invalidMembersWith[i][j];
-      const primeKey = membersToPrime[member]
+    for (let j = 0; j < mutualExclusive[i].length; j++) {
+      const element = mutualExclusive[i][j];
+      const primeKey = elementsToPrime[element]
       mult = mult * primeKey;
     }
-    invalidMembersWithKeys[mult] = mult;
+    mutualExclusiveKeys[mult] = mult;
   }
-  return invalidMembersWithKeys;
+  return mutualExclusiveKeys;
 };
 
-const invalidGroupsPop = (invalidGroups, membersToPrime) => {
+const invalidGroupsPop = (invalidGroups, elementsToPrime) => {
   const invalidGroupsKeys = {};
   for (let i = 0; i < invalidGroups.length; i++) {
     let mult = 1;
     for (let j = 0; j < invalidGroups[i].length; j++) {
-      const member = invalidGroups[i][j];
-      const primeKey = membersToPrime[member];
+      const element = invalidGroups[i][j];
+      const primeKey = elementsToPrime[element];
       mult = mult * primeKey;
     }
     invalidGroupsKeys[mult] = mult;
@@ -43,14 +43,14 @@ const invalidGroupsPop = (invalidGroups, membersToPrime) => {
   return invalidGroupsKeys;
 };
 
-const arrKeysPop = (arr, group_size, membersToPrime) => {
+const arrKeysPop = (arr, group_size, elementsToPrime) => {
   const num_groups = arr.length / group_size;
   const arrKeys = [];
   for (let i = 0; i < num_groups; i++) {
     let mult = 1;
     for (let j = 0; j < group_size; j++) {
       const index = (i * group_size) + j;
-      mult = mult * membersToPrime[arr[index]];
+      mult = mult * elementsToPrime[arr[index]];
     }
     arrKeys.push(mult);
   }
@@ -64,17 +64,17 @@ const switchPosition = (arr, p1, p2) => {
   arr[p2] = tmp;
 };
 
-const takeTeamArrayMult = (j, arr, group_size, membersToPrime) => {
+const takeTeamArrayMult = (j, arr, group_size, elementsToPrime) => {
   const index = j * group_size;
   const array = arr.slice(index, index + group_size);
-  const mult = array.reduce((acc, worker) => acc * membersToPrime[worker], 1);
+  const mult = array.reduce((acc, worker) => acc * elementsToPrime[worker], 1);
   return { array, mult };
 }
 
-const arrayDivision = (arr, group_size, membersToPrime, alreadyExist) => {
+const arrayDivision = (arr, group_size, elementsToPrime, alreadyExist) => {
   const result = [];
   for (let j = 0; j < arr.length / group_size; j++) {
-    const { array, mult } = takeTeamArrayMult(j, arr, group_size, membersToPrime);
+    const { array, mult } = takeTeamArrayMult(j, arr, group_size, elementsToPrime);
     result.push(array);
     alreadyExist[j] = {
       ...alreadyExist[j],
@@ -85,44 +85,45 @@ const arrayDivision = (arr, group_size, membersToPrime, alreadyExist) => {
 };
 
 
-const main = (members, restrictions, group_size, n_results) => {
-  const membersToPrime = {};
-  const primeToMembers = {};
+const main = (elements, restrictions, group_size, n_results) => {
+  const elementsToPrime = {};
+  const primeToelements = {};
   const alreadyExist = {};
   let count = 0;
 
-  for (let i = 0; i < members.length; i += 1) {
-    membersToPrime[members[i]] = primes[i];
-    primeToMembers[primes[i]] = members[i];
+  for (let i = 0; i < elements.length; i += 1) {
+    elementsToPrime[elements[i]] = primes[i];
+    primeToelements[primes[i]] = elements[i];
   }
 
-  const { invalidMembersWith, invalidGroups } = restrictions;
-  const invalidMembersWithKeys =
-    invalidMembersWithPop(invalidMembersWith, membersToPrime);
+  const { mutualExclusive, invalidGroups } = restrictions;
+  const mutualExclusiveKeys =
+    mutualExclusivePop(mutualExclusive, elementsToPrime);
 
   const invalidGroupsKeys =
-    invalidGroupsPop(invalidGroups, membersToPrime);
+    invalidGroupsPop(invalidGroups, elementsToPrime);
 
   const out = [];
   let minTimes = 0;
 
   const verifications = (arr, alreadyExist) => {
-    const arrKeys = arrKeysPop(arr, group_size, membersToPrime);
-
-    const validateGroupsKeys =
-      arrKeys.some((key) => invalidGroupsKeys[key]);
-
-    const validateMembersWithKeys =
-      arrKeys.some((arrkey) => Object.keys(invalidMembersWithKeys).some((key) => arrkey % key === 0));
-
     if (minTimes < arr.length) {
       minTimes++;
       return false;
     }
 
+    const arrKeys = arrKeysPop(arr, group_size, elementsToPrime);
+
+    const validateGroupsKeys =
+      arrKeys.some((key) => invalidGroupsKeys[key]);
+
+    const validateElementsWithKeys =
+      arrKeys.some((arrkey) => Object.keys(mutualExclusiveKeys).some((key) => arrkey % key === 0));
+
     let all = false;
+
     for (let i = 0; i < arr.length / group_size; i++) {
-      const { mult } = takeTeamArrayMult(i, arr, group_size, membersToPrime);
+      const { mult } = takeTeamArrayMult(i, arr, group_size, elementsToPrime);
       all = (alreadyExist[i]?.[mult] !== undefined);
     }
 
@@ -132,7 +133,7 @@ const main = (members, restrictions, group_size, n_results) => {
 
     if (validateGroupsKeys) { return true; }
 
-    if (validateMembersWithKeys) { return true; }
+    if (validateElementsWithKeys) { return true; }
 
     return false;
   };
@@ -142,7 +143,7 @@ const main = (members, restrictions, group_size, n_results) => {
       let len = arr.length;
       if (verifications(arr, alreadyExist)) { return; }
       if (k === len) {
-        const result = arrayDivision(arr, group_size, membersToPrime, alreadyExist);
+        const result = arrayDivision(arr, group_size, elementsToPrime, alreadyExist);
         out.push([...result]);
       } else {
         for (let i = k; i < len; i++) {
@@ -156,15 +157,15 @@ const main = (members, restrictions, group_size, n_results) => {
     recur(A, 0);
   };
 
-  permutation(members);
-  console.log('count: ', count)
+  permutation(elements);
+  console.log('count: ', count);
   return out;
 };
 
-const members = ['a', 'b', 'c', 'd'];
+const elements = ['a', 'b', 'c', 'd'];
 const restrictions = {
-  invalidMembersWith: [['a', 'b']],
+  mutualExclusive: [['a', 'b']],
   invalidGroups: [],
 };
 
-console.log(main(members, restrictions, 2));
+console.log(main(elements, restrictions, 2));
